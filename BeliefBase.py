@@ -8,13 +8,3 @@ class BeliefBase:
             self.beliefBase.remove(belief)
     def getbeliefSet(self):
         print(self.beliefBase)
-
-beliefOb1 = BeliefBase()
-beliefOb1.addBelief("q and r")
-beliefOb1.addBelief("x and a")
-beliefOb1.addBelief("x or y")
-beliefOb1.removeBelief("x or y")
-beliefOb1.addBelief("x1 and y")
-beliefOb1.addBelief("x1 and y")
-
-beliefOb1.getbeliefSet()
