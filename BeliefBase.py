@@ -16,13 +16,15 @@ class BeliefBase:
             return False
         
         for orSequence in arrayBelief:
+            #TODO: Remove a bug when there is a condtradiciton in the new belief(i.e (a and neg a))
             if(self.checkForContradiction(orSequence)):
                 print("Contradiction found!!!!")
                 return False
         
         print("WHOLE BELIEF WAS ADDED")
         self.beliefBase.append(belief)
-            
+        print("NEW BELIEF BASE: ", self.beliefBase)
+
     def removeBelief(self,belief):
         if belief in self.beliefBase:
             self.beliefBase.remove(belief)
@@ -38,10 +40,11 @@ class BeliefBase:
             for partBelief in cnfBelief:
                 if(cnfBelief not in cnfBeliefBase):
                     cnfBeliefBase.append(partBelief)
-        return cnfBelief
+        return cnfBeliefBase
 
     def checkForContradiction(self, newBelief):
         print("NEW BELIEF: ", newBelief)
+        buffNewBelief = newBelief
 
         if(len(self.beliefBase) == 0):
             print("BELIEF WAS ADDED AS THE FIRST ELEMENT IN THE BELIEF BASE")
@@ -73,6 +76,8 @@ class BeliefBase:
                 else:
                     print("PAIR CANNOT BE RESOLVED\n")
                     resolvedInLastIteration = False
+        if(newBelief == buffNewBelief):
+            return False
         if(bufferBeliefBase == []):
             return False
         return True
@@ -116,46 +121,27 @@ class BeliefBase:
         for literal in set1:
             print(literal)
             if -literal in set2:
-
+                Have_same_item_flag = 1
                 set1=set1- {literal}
                 set2=set2 - {-literal}
             elif literal in set2:
-                Have_same_item_flag=1
+                Have_same_item_flag=2
 
         if Have_same_item_flag == 0:
             return False
         else:
             new_clause = (set1 | set2 )
-        if len(new_clause)==0:
-            return False
-        else:
             return list(new_clause)
-
-    
-
 
 a, b, c, d = symbols('a b c d')
 bb = BeliefBase()
 
-# clause1 = [a, -c]
-# clause2 = [a]
+# clause1 = [-a, -c]
+# clause2 = [-a]
 # print(bb.resolve(clause1, clause2))
 
-bb.addBelief("(a iff c) or b")
-bb.addBelief("(a)")
+bb.addBelief("a and b")
+bb.addBelief("neg b")
+bb.addBelief("a")
+
 print(bb.getBeliefSet())
-
-#print(bb.checkForContradiction([[a, b]]))
-#beliefs = [[-c, b, a], [-a, b, c], [b], [a]]
-# b = BeliefBase()
-# beliefs = b.negateBelief(beliefs)
-# print(beliefs)
-
-#string = "(a iff c) or b"
-# string = "(neg a or b or c) and (neg b or a) and (neg c or a) and (neg a)"
-# string2 = "(neg b)"
-# b = BeliefBase()
-
-# b.addBelief(string)
-# b.addBelief(string2)
-# print(b.getBeliefSet())
