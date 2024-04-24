@@ -4,15 +4,15 @@ from sympy import symbols
 
 class BeliefBase:
     def __init__(self) -> None:
-        self.beliefBase = []
+        self.beliefBase = dict()
     
-    def addBelief(self,belief):
+    def addBelief(self,belief,priority):
         #Transform logical cluase into logical clause in cnf format
         beliefCNF = self.ClauseToCNF(belief)
         #Get array of arrays from each clause between 'AND'
         arrayBelief = self.StringToArrayCNF(beliefCNF)
         #To forbidden adding same values 
-        if(arrayBelief in self.beliefBase):
+        if(beliefCNF in self.beliefBase):
             return False
         
         for orSequence in arrayBelief:
@@ -22,7 +22,7 @@ class BeliefBase:
                 return False
         
         print("WHOLE BELIEF WAS ADDED")
-        self.beliefBase.append(belief)
+        self.beliefBase.update({belief: priority})
         print("NEW BELIEF BASE: ", self.beliefBase)
 
     def removeBelief(self,belief):
@@ -42,6 +42,8 @@ class BeliefBase:
                     cnfBeliefBase.append(partBelief)
         return cnfBeliefBase
 
+    # returns True - there is contradiction, 
+    # returns - False - no contradiction
     def checkForContradiction(self, newBelief):
         print("NEW BELIEF: ", newBelief)
         buffNewBelief = newBelief
@@ -61,7 +63,6 @@ class BeliefBase:
                 print("BELIEF BASE AFTER RESOLVING: ", bufferBeliefBase)
                 print("TOKEN FROM BELIEF BASE: ", bufferBeliefBase[i])
                 print("NEW BELIEF: ", newBelief[0])
-
                 resolveResult = self.resolve(newBelief[0], bufferBeliefBase[i])
                 if(resolveResult is not False): 
                     if(len(resolveResult) == 0):
@@ -82,17 +83,20 @@ class BeliefBase:
             return False
         return True
 
+    # put in 2d array as the parameter
     def negateBelief(self, beliefs):
         symbols_list = symbols('a b c d')
         symbol_mapping_negative = {symbol: -symbol for symbol in symbols_list}
         symbol_mapping_negative.update({-symbol: symbol for symbol in symbols_list})
         negated_beliefs = [[symbol_mapping_negative.get(symbol, symbol) for symbol in row] for row in beliefs]
-        return negated_beliefs
+        return negated_beliefs  
 
+    # non-cnf string into cnf string
     def ClauseToCNF(self, clause):
         resultClause = toCNF.run(clause)
         return resultClause[len(resultClause)-1]
     
+    # cnf string into cnf array
     def StringToArrayCNF(self, cnf_string):
         symbols_list = symbols('a b c d')
         symbol_mapping = {symbol.name: symbol for symbol in symbols_list}
@@ -119,7 +123,6 @@ class BeliefBase:
         Have_same_item_flag = 0
 
         for literal in set1:
-            print(literal)
             if -literal in set2:
                 Have_same_item_flag = 1
                 set1=set1- {literal}
@@ -133,15 +136,17 @@ class BeliefBase:
             new_clause = (set1 | set2 )
             return list(new_clause)
 
+
 a, b, c, d = symbols('a b c d')
 bb = BeliefBase()
 
-# clause1 = [-a, -c]
+# clause1 = [a, -c]
 # clause2 = [-a]
-# print(bb.resolve(clause1, clause2))
+# print(bb.negateBelief([[a, -c]]))
 
-bb.addBelief("a and b")
-bb.addBelief("neg b")
-bb.addBelief("a")
+bb.addBelief("a and b", 1)
+bb.addBelief("(a imp b) or (neg c and (d imp a))", 1)
+bb.addBelief("a", 2)
+bb.addBelief("a", 1000)
 
-print(bb.getBeliefSet())
+# print(bb.getBeliefSet())
