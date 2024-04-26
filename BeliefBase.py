@@ -7,12 +7,14 @@ class BeliefBase:
         self.beliefBase = dict()
     
     def addBelief(self,belief,priority):
+
         #Transform logical cluase into logical clause in cnf format
         beliefCNF = self.ClauseToCNF(belief)
         #Get array of arrays from each clause between 'AND'
         arrayBelief = self.StringToArrayCNF(beliefCNF)
+
         #To forbidden adding same values 
-        if(beliefCNF in self.beliefBase):
+        if(belief in self.beliefBase):
             return False
         
         for orSequence in arrayBelief:
@@ -54,7 +56,6 @@ class BeliefBase:
         
         newBelief = self.negateBelief([newBelief])
 
-        buffNewBelief = newBelief
         bufferBeliefBase = self.convertBeliefBaseToCNF()
 
         print("NEGATED NEW BELIEF: ", newBelief, " BELIEF BASE: ", bufferBeliefBase, "\n")
@@ -80,10 +81,11 @@ class BeliefBase:
                 else:
                     print("PAIR CANNOT BE RESOLVED\n")
                     resolvedInLastIteration = False
-        if(newBelief == buffNewBelief):
-            return False
+
+        
         if(bufferBeliefBase == []):
-            return False
+            return True
+        
         return True
 
     # put in 2d array as the parameter
@@ -141,12 +143,15 @@ class BeliefBase:
 
 
 a, b, c, d = symbols('a b c d')
+
 bb = BeliefBase()
 
-print(bb.convertBeliefBaseToCNF())
+#print(bb.resolve([b, -a], [-a]))
 
 #print(bb.StringToArrayCNF(bb.ClauseToCNF("a imp b")))
-bb.addBelief("a imp b", 1)
+
 bb.addBelief("a imp c", 2)
+bb.addBelief("a imp b", 1)
 bb.addBelief("a", 1000)
+bb.addBelief("c", 1000)
 print(bb.getBeliefSet())
