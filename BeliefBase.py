@@ -36,6 +36,7 @@ class BeliefBase:
     def convertBeliefBaseToCNF(self):
         cnfBeliefBase = []
         for belief in self.beliefBase:
+            belief = self.ClauseToCNF(belief)
             cnfBelief = self.StringToArrayCNF(belief)
             for partBelief in cnfBelief:
                 if(cnfBelief not in cnfBeliefBase):
@@ -46,14 +47,16 @@ class BeliefBase:
     # returns - False - no contradiction
     def checkForContradiction(self, newBelief):
         print("NEW BELIEF: ", newBelief)
-        buffNewBelief = newBelief
 
         if(len(self.beliefBase) == 0):
             print("BELIEF WAS ADDED AS THE FIRST ELEMENT IN THE BELIEF BASE")
             return False
         
         newBelief = self.negateBelief([newBelief])
+
+        buffNewBelief = newBelief
         bufferBeliefBase = self.convertBeliefBaseToCNF()
+
         print("NEGATED NEW BELIEF: ", newBelief, " BELIEF BASE: ", bufferBeliefBase, "\n")
 
         resolvedInLastIteration = True
@@ -140,13 +143,10 @@ class BeliefBase:
 a, b, c, d = symbols('a b c d')
 bb = BeliefBase()
 
-# clause1 = [a, -c]
-# clause2 = [-a]
-# print(bb.negateBelief([[a, -c]]))
+print(bb.convertBeliefBaseToCNF())
 
-bb.addBelief("a and b", 1)
-bb.addBelief("(a imp b) or (neg c and (d imp a))", 1)
-bb.addBelief("a", 2)
+#print(bb.StringToArrayCNF(bb.ClauseToCNF("a imp b")))
+bb.addBelief("a imp b", 1)
+bb.addBelief("a imp c", 2)
 bb.addBelief("a", 1000)
-
-# print(bb.getBeliefSet())
+print(bb.getBeliefSet())
