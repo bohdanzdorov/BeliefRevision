@@ -1,32 +1,25 @@
+import copy
 import re
+
+from numpy import unique
+
 import cnf_py.run as toCNF
 from sympy import symbols
 
 class BeliefBase:
     def __init__(self) -> None:
         self.beliefBase = dict()
+        self.resolvents = []
     
-    def addBelief(self,belief,priority):
-
-        #Transform logical cluase into logical clause in cnf format
-        beliefCNF = self.ClauseToCNF(belief)
-        #Get array of arrays from each clause between 'AND'
-        arrayBelief = self.StringToArrayCNF(beliefCNF)
-
-        #To forbidden adding same values 
-        if(belief in self.beliefBase):
-            return False
-        
-        for orSequence in arrayBelief:
-            #TODO: Remove a bug when there is a condtradiciton in the new belief(i.e (a and neg a))
-            if(self.checkForContradiction(orSequence)):
-                print("Contradiction found!!!!")
-                return False
-        
-        print("WHOLE BELIEF WAS ADDED")
-        self.beliefBase.update({belief: priority})
-        print("NEW BELIEF BASE: ", self.beliefBase)
-
+    def addBelief(self, belief, priority):
+        # a, b, c, d = symbols('a b c d')
+        # self.beliefBase.update({"b imp neg c" : 0})
+        # self.beliefBase.update({"neg c" : 0})
+        # self.beliefBase.update({"neg b" : 0})
+        if self.checkForEntailment(belief):
+            print("Belief Base ", self.beliefBase, "entails belief", belief)
+        else:
+            print("Belief Base ", self.beliefBase, "doesn't entail belief", belief)
     def removeBelief(self,belief):
         if belief in self.beliefBase:
             self.beliefBase.remove(belief)
@@ -45,48 +38,55 @@ class BeliefBase:
                     cnfBeliefBase.append(partBelief)
         return cnfBeliefBase
 
-    # returns True - there is contradiction, 
-    # returns - False - no contradiction
-    def checkForContradiction(self, newBelief):
-        print("NEW BELIEF: ", newBelief)
-
-        if(len(self.beliefBase) == 0):
-            print("BELIEF WAS ADDED AS THE FIRST ELEMENT IN THE BELIEF BASE")
+    # returns True - inputted belief follows from Belief Base
+    # returns False - inputted belief doesn't follow from Belief Base
+    def checkForEntailment(self, belief):
+        if belief in self.beliefBase:
+            print("This belief {", belief, "} is already in beliefBase", self.beliefBase)
             return False
-        
-        newBelief = self.negateBelief([newBelief])
 
         bufferBeliefBase = self.convertBeliefBaseToCNF()
-
-        print("NEGATED NEW BELIEF: ", newBelief, " BELIEF BASE: ", bufferBeliefBase, "\n")
-
-        resolvedInLastIteration = True
-
-        while(resolvedInLastIteration == True and len(bufferBeliefBase) > 0):
-            for i in range(len(bufferBeliefBase)):
-                print("BELIEF BASE AFTER RESOLVING: ", bufferBeliefBase)
-                print("TOKEN FROM BELIEF BASE: ", bufferBeliefBase[i])
-                print("NEW BELIEF: ", newBelief[0])
-                resolveResult = self.resolve(newBelief[0], bufferBeliefBase[i])
-                if(resolveResult is not False): 
-                    if(len(resolveResult) == 0):
-                        print("RESOLVED WITH SUCCESS , EMPTY BRACKET APPEAR\n")
-                        return False
-                    elif(len(resolveResult) > 0):
-                        print("RESOLVED WITH SUCCESS ", resolveResult, "\n")
-                        newBelief = [resolveResult]
-                        resolvedInLastIteration = True
-                        bufferBeliefBase.pop(i)   
-                        break
-                else:
-                    print("PAIR CANNOT BE RESOLVED\n")
-                    resolvedInLastIteration = False
-
-        
-        if(bufferBeliefBase == []):
-            return True
-        
-        return True
+        beliefCNF = self.ClauseToCNF(belief)
+        # Get array of arrays from each clause between 'AND'
+        arrayBelief = self.StringToArrayCNF(beliefCNF)
+        #negate belief
+        negativeBeliefInCNF = self.negateBelief(arrayBelief)
+        #Add each clause of belief to buffer belief base
+        for eachNegativeSmallPartOfBelief in negativeBeliefInCNF:
+            bufferBeliefBase.append(eachNegativeSmallPartOfBelief)
+        print("\n\nNEGATED BELIEF: ", negativeBeliefInCNF, "\n")
+        #make resolve each clause with each clause (except when clause1 = clause2)
+        while(True):
+            print("\nBUFFER BELIEF BASE:", bufferBeliefBase)
+            i = 0
+            initialJ = 1
+            j = initialJ
+            new = []
+            while i < len(bufferBeliefBase) - 1:
+                while j < len(bufferBeliefBase):
+                    print("i=", i, "j=", j)
+                    complementaryLiteralFound = self.resolve(bufferBeliefBase[i], bufferBeliefBase[j])
+                    print("COMPLEMENTARY:", complementaryLiteralFound)
+                    if complementaryLiteralFound:
+                        print("from", bufferBeliefBase[i], "and", bufferBeliefBase[j], "RESOLVENTS is", self.resolvents)
+                        #if buffer Belief Base is unsatisfaible -> belief Base entails belief
+                        if len(self.resolvents) == 0:
+                            return True
+                        new.append(self.resolvents)
+                        print("NEW:", new, "\n")
+                    j += 1
+                initialJ += 1
+                j = initialJ
+                i += 1
+            #Check for repetition, if found -> the algorithm is infinite loop
+            for eachSmallPartOfNew in new:
+                if eachSmallPartOfNew in bufferBeliefBase:
+                    return False
+            #If there is nothing to resolve -> the Belief Base doesn't entail belief
+            if len(new) == 0:
+                return False
+            for eachSmallPartOfNew in new:
+                bufferBeliefBase.append(eachSmallPartOfNew)
 
     # put in 2d array as the parameter
     def negateBelief(self, beliefs):
@@ -122,24 +122,24 @@ class BeliefBase:
 
         return literals
 
+    #returns True - if complementary literals were found
+    #returns False - if there is anything to resolve
     def resolve(self, clause1, clause2):
         set1 = set(clause1)
         set2 = set(clause2)
-        Have_same_item_flag = 0
+        complementaryLiteralFound = False
 
         for literal in set1:
             if -literal in set2:
-                Have_same_item_flag = 1
-                set1=set1- {literal}
-                set2=set2 - {-literal}
-            elif literal in set2:
-                Have_same_item_flag=2
+                set1 = set1 - {literal}
+                set2 = set2 - {-literal}
+                complementaryLiteralFound = True
+                break
+        if complementaryLiteralFound:
+            new_clause = (set1 | set2)
+            self.resolvents = copy.deepcopy(list(new_clause))
+        return complementaryLiteralFound
 
-        if Have_same_item_flag == 0:
-            return False
-        else:
-            new_clause = (set1 | set2 )
-            return list(new_clause)
 
 
 a, b, c, d = symbols('a b c d')
@@ -149,9 +149,8 @@ bb = BeliefBase()
 #print(bb.resolve([b, -a], [-a]))
 
 #print(bb.StringToArrayCNF(bb.ClauseToCNF("a imp b")))
-
-bb.addBelief("a imp c", 2)
-bb.addBelief("a imp b", 1)
-bb.addBelief("a", 1000)
-bb.addBelief("c", 1000)
-print(bb.getBeliefSet())
+#bb.addBelief("a", 2)
+#bb.addBelief("neg b", 1)
+bb.addBelief("b", 1000)
+#bb.addBelief("c", 1000)
+#print(bb.getBeliefSet())
