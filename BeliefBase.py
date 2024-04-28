@@ -36,7 +36,7 @@ class BeliefBase:
             print("Belief {" + belief + "} was successfully added to the belief base")
 
     def revisionWithPostulates(self, belief, priority):
-        a, b, c, d = symbols('a b c d')
+        #a, b, c, d = symbols('a b c d')
 
         negatedBelief = "neg(" + belief + ")"
         isNegatedBeliefInBase = False
@@ -206,6 +206,7 @@ class BeliefBase:
         negated_beliefs = []
         if (len(beliefs) == 1):
             for i in range(len(beliefs[0])):
+                print(-beliefs[0][i])
                 negated_beliefs.append([-beliefs[0][i]])
         else:
             for i in range((len(beliefs))):
@@ -266,7 +267,6 @@ class BeliefBase:
                 complementaryLiteralFound = True
         return complementaryLiteralFound
 
-a, b, c, d = symbols('a b c d')
 bb = BeliefBase()
 
 choice = 0
