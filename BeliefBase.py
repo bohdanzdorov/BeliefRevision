@@ -52,12 +52,33 @@ class BeliefBase:
             beliefCNF = self.ClauseToCNF(belief)
             # Get array of arrays from each clause between 'AND'
             arrayBelief = self.StringToArrayCNF(beliefCNF)
+
+            beliefBaseBufferForExtensionPostulate = copy.deepcopy(self.beliefBase)
+            isExtensionPassed = False
+            print(len(arrayBelief))
+            if(len(arrayBelief) > 1):
+                beliefBaseArrayBufferForExtensionPostulate = copy.deepcopy(bufferBeliefBase)
+                arrayBeliefForExtensionPostulate = copy.deepcopy(arrayBelief)
+                buff = arrayBeliefForExtensionPostulate[0]
+                arrayBeliefForExtensionPostulate[0] = arrayBeliefForExtensionPostulate[1]
+                arrayBeliefForExtensionPostulate[1] = buff
+                if not self.checkForEntailment(arrayBeliefForExtensionPostulate, beliefBaseArrayBufferForExtensionPostulate):
+                    negativeArrayBeliefExtensionPostulate = self.negateBelief(arrayBeliefForExtensionPostulate)
+                    self.beliefBase = copy.deepcopy(self.contraction(negativeArrayBeliefExtensionPostulate))
+                beliefBaseBufferForExtensionPostulate.update({belief: priority})
+            else:
+                isExtensionPassed = True
+
             if not self.checkForEntailment(arrayBelief, bufferBeliefBase):
                 negativeArrayBelief = self.negateBelief(arrayBelief)
                 self.beliefBase = copy.deepcopy(self.contraction(negativeArrayBelief))
             self.expansion(belief, priority)      
             print("Belief {" + belief + "} was successfully added to the belief base")
-            beliefBaseBufferForPostulates.update({belief : priority}) # for vacuity postulate
+            if(beliefBaseBufferForExtensionPostulate == self.beliefBase or isExtensionPassed):
+                print("Extension postulate passed")
+            else:
+                print("Extension postulate failed")
+            beliefBaseBufferForPostulates.update({belief : priority}) # for Inclusion and Vacuity postulate
         
         #Vacuity postulate
         if(not isNegatedBeliefInBase):
