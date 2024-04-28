@@ -73,8 +73,8 @@ class BeliefBase:
                 isInclusionFailed = True
                 print("Inclusion postulate failed")
                 break
-            if(not isInclusionFailed):
-                print("Inclusion postulate passed")
+        if(not isInclusionFailed):
+            print("Inclusion postulate passed")
         #Success postulate
         if(belief in self.beliefBase):
             print("Success postulate passed")
