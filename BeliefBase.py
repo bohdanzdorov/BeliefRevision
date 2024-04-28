@@ -253,12 +253,11 @@ while choice != -1:
     choice = int(input("Please, choose the thing you want to do with the belief base: \n" +
         "1. Print\n" +  
         "2. Expand\n" +
-        "3. Remove belief\n" +
-        "4. Check for logical entailment\n"+
-        "5. Contraction\n"+
-        "6. Revision\n"+
-        "7. Revision with postulates\n"
-        "8. Clear belief base\n\n"+
+        "3. Check for logical entailment\n"+
+        "4. Contraction\n"+
+        "5. Revision\n"+
+        "6. Revision with postulates\n"
+        "7. Clear belief base\n\n"+
         ">> "))
     if(choice == 1):
         print("\nBelief base: ", bb.getBeliefBase(), "\n")
@@ -270,11 +269,6 @@ while choice != -1:
         print("\nBelief {", newBelief, "} expanded the belief base!")
         input("Press any key to continue...\n\n")
     elif(choice == 3):
-        beliefToRemove = input("Enter belief to remove >\n")
-        bb.removeBelief(beliefToRemove)
-        print("\nBelief {", beliefToRemove, "} was removed from the belief base!")
-        input("Press any key to continue...\n\n")
-    elif(choice == 4):
         beliefToCheck = input("Enter belief for checking the logical entailment with current belief base > \n")
         beliefCNF = bb.ClauseToCNF(beliefToCheck)
         arrayBelief = bb.StringToArrayCNF(beliefCNF)
@@ -283,24 +277,24 @@ while choice != -1:
         else:
             print("Belief {"+ beliefToCheck+ "} does NOT entails from the current belief base")
         input("Press any key to continue...\n\n")
-    elif(choice == 5):
+    elif(choice == 4):
         beliefToContruct = input("Enter belief for contruction of belief base > \n")
         bb.contraction(beliefToContruct)
         print("Contruction with belief {" + beliefToContruct + "} preformed successfully")
         print("Belief base after contruction: ", bb.getBeliefBase())
         input("Press any key to continue...\n\n")
-    elif(choice == 6):
+    elif(choice == 5):
         beliefToRevision = input("Enter belief for revision of belief base > \n")
         beliefToRevisionPriority = int(input("Enter the priority of this belief > \n"))
         bb.revision(beliefToRevision, beliefToRevisionPriority)
         print("Belief base after revision: ", bb.getBeliefBase())
         input("Press any key to continue...\n\n")
-    elif(choice == 7):
+    elif(choice == 6):
         beliefToRevisionWPostulates = input("Enter belief for revision of belief base > \n")
         beliefToRevisionPriorityWPostulates = int(input("Enter the priority of this belief > \n"))
         bb.revisionWithPostulates(beliefToRevisionWPostulates, beliefToRevisionPriorityWPostulates)
         print("Belief base after revision: ", bb.getBeliefBase())
         input("Press any key to continue...\n\n")
-    elif(choice == 8):
+    elif(choice == 7):
         bb.clearBeliefBase()
         print("Belief base was cleared successfully")
