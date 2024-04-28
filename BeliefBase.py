@@ -35,6 +35,51 @@ class BeliefBase:
             self.expansion(belief, priority)
             print("Belief {" + belief + "} was successfully added to the belief base")
 
+    def revisionWithPostulates(self, belief, priority):
+        a, b, c, d = symbols('a b c d')
+
+        negatedBelief = "neg(" + belief + ")"
+        isNegatedBeliefInBase = False
+        if(negatedBelief in self.beliefBase):
+            isNegatedBeliefInBase = True
+
+        beliefBaseBufferForPostulates = copy.deepcopy(self.beliefBase)
+        
+        if belief in self.beliefBase:
+            print("This belief {", belief, "} is already in beliefBase", self.beliefBase)
+        else: 
+            bufferBeliefBase = self.convertBeliefBaseToCNF(self.beliefBase)
+            beliefCNF = self.ClauseToCNF(belief)
+            # Get array of arrays from each clause between 'AND'
+            arrayBelief = self.StringToArrayCNF(beliefCNF)
+            if not self.checkForEntailment(arrayBelief, bufferBeliefBase):
+                negativeArrayBelief = self.negateBelief(arrayBelief)
+                self.beliefBase = copy.deepcopy(self.contraction(negativeArrayBelief))
+            self.expansion(belief, priority)      
+            print("Belief {" + belief + "} was successfully added to the belief base")
+            beliefBaseBufferForPostulates.update({belief : priority}) # for vacuity postulate
+        
+        #Vacuity postulate
+        if(not isNegatedBeliefInBase):
+            if(self.beliefBase == beliefBaseBufferForPostulates):
+                print("Vacuity postulate passed")
+            else:
+                print("Vacuity postulate failed")
+        #Inclusion postulate
+        isInclusionFailed = False
+        for key, value in self.beliefBase.items():
+            if key not in beliefBaseBufferForPostulates:
+                print(key)
+                isInclusionFailed = True
+                print("Inclusion postulate failed")
+                break
+            if(not isInclusionFailed):
+                print("Inclusion postulate passed")
+        #Success postulate
+        if(belief in self.beliefBase):
+            print("Success postulate passed")
+        else:
+            print("Success postulate failed")
 
     def removeBelief(self, belief):
         if belief in self.beliefBase:
@@ -42,8 +87,6 @@ class BeliefBase:
 
     def contraction(self, newBelief):
         listOfWorlds = self.sum_combinations(self.beliefBase)
-        print(listOfWorlds)
-
         correctWorld = dict()
         maxPriority = 0
         for world in listOfWorlds:
@@ -55,10 +98,8 @@ class BeliefBase:
                 if totalPriority > maxPriority:
                     maxPriority = totalPriority
                     correctWorld = world
-                    print(correctWorld)
-
-
         return correctWorld
+    
     def sum_combinations(self, d):
         results = []
         keys = list(d.keys())
@@ -73,6 +114,7 @@ class BeliefBase:
             del result['sum']
 
         return results
+    
     def getBeliefSet(self):
         return self.beliefBase
 
@@ -212,10 +254,11 @@ while choice != -1:
         "1. Print\n" +  
         "2. Expand\n" +
         "3. Remove belief\n" +
-        "4. Check for logical entailment with new belief\n"+
-        "5. Contraction with new belief\n"+
-        "6. Revision with new belief\n"
-        "7. Clear belief base\n\n"+
+        "4. Check for logical entailment\n"+
+        "5. Contraction\n"+
+        "6. Revision\n"+
+        "7. Revision with postulates\n"
+        "8. Clear belief base\n\n"+
         ">> "))
     if(choice == 1):
         print("\nBelief base: ", bb.getBeliefBase(), "\n")
@@ -253,5 +296,11 @@ while choice != -1:
         print("Belief base after revision: ", bb.getBeliefBase())
         input("Press any key to continue...\n\n")
     elif(choice == 7):
+        beliefToRevisionWPostulates = input("Enter belief for revision of belief base > \n")
+        beliefToRevisionPriorityWPostulates = int(input("Enter the priority of this belief > \n"))
+        bb.revisionWithPostulates(beliefToRevisionWPostulates, beliefToRevisionPriorityWPostulates)
+        print("Belief base after revision: ", bb.getBeliefBase())
+        input("Press any key to continue...\n\n")
+    elif(choice == 8):
         bb.clearBeliefBase()
         print("Belief base was cleared successfully")
