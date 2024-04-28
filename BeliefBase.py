@@ -17,19 +17,23 @@ class BeliefBase:
         self.beliefBase.update({belief : priority})
     def revision(self, belief, priority):
         a, b, c, d = symbols('a b c d')
-        bb.beliefBase.update({"a imp b": 5})
-        #bb.beliefBase.update({"a imp c": 2})
-        #bb.beliefBase.update({"a imp d": 6})
-        bb.beliefBase.update({"a": 10})
+        # bb.beliefBase.update({"a imp b": 5})
+        bb.beliefBase.update({"a imp c": 1001})
+        bb.beliefBase.update({"a imp d": 10})
+        bb.beliefBase.update({"a imp b": 20})
+        bb.beliefBase.update({"a": 3000})
         if belief in self.beliefBase:
             print("This belief {", belief, "} is already in beliefBase", self.beliefBase)
         else:
             bufferBeliefBase = self.convertBeliefBaseToCNF(self.beliefBase)
-            if self.checkForEntailment(belief, bufferBeliefBase):
-                print("Contraction part:")
-                self.contraction(belief)
+            beliefCNF = self.ClauseToCNF(belief)
+            # Get array of arrays from each clause between 'AND'
+            arrayBelief = self.StringToArrayCNF(beliefCNF)
+            if not self.checkForEntailment(arrayBelief, bufferBeliefBase):
+                negativeArrayBelief = self.negateBelief(arrayBelief)
+                self.beliefBase = copy.deepcopy(self.contraction(negativeArrayBelief))
             self.expansion(belief, priority)
-            print("Belief was added to beliefBase", self.beliefBase)
+            print("\n\nBelief was added to beliefBase", self.beliefBase)
 
 
     def removeBelief(self, belief):
@@ -37,7 +41,7 @@ class BeliefBase:
             self.beliefBase.pop(belief)
 
     def contraction(self, newBelief):
-        print("THERE IS CONTRACTION:")
+        #print("THERE IS CONTRACTION:")
         listOfWorlds = self.sum_combinations(self.beliefBase)
         print(listOfWorlds)
 
@@ -45,11 +49,11 @@ class BeliefBase:
         maxPriority = 0
         for world in listOfWorlds:
             convertedWorldToCNF = self.convertBeliefBaseToCNF(world)
-
+            print("\nCurrent world", world)
             if self.checkForEntailment(newBelief, convertedWorldToCNF):
-                print("World entails new belief")
+                print("World entails negated belief")
             else:
-                print("World", world)
+                #print("World", world)
                 totalPriority = 0
                 for priority in list(world.values()):
                     totalPriority += priority
@@ -57,6 +61,8 @@ class BeliefBase:
                     maxPriority = totalPriority
                     correctWorld = world
                     print(correctWorld)
+
+
         return correctWorld
     def sum_combinations(self, d):
         results = []
@@ -88,38 +94,35 @@ class BeliefBase:
 
     # returns True - inputted belief follows from Belief Base
     # returns False - inputted belief doesn't follow from Belief B
-    def checkForEntailment(self, belief, bufferBeliefBase):
-        beliefCNF = self.ClauseToCNF(belief)
-        # Get array of arrays from each clause between 'AND'
-        arrayBelief = self.StringToArrayCNF(beliefCNF)
+    def checkForEntailment(self, arrayBelief, bufferBeliefBase):
         # negate belief
         negativeBeliefInCNF = self.negateBelief(arrayBelief)
         # Add each clause of belief to buffer belief base
         for eachNegativeSmallPartOfBelief in negativeBeliefInCNF:
             bufferBeliefBase.append(eachNegativeSmallPartOfBelief)
-        print("\n\nNEGATED BELIEF: ", negativeBeliefInCNF, "\n")
+        #print("\n\nNEGATED BELIEF: ", negativeBeliefInCNF, "\n")
         # make resolve each clause with each clause (except when clause1 = clause2)
         while True:
-            print("\nBUFFER BELIEF BASE:", bufferBeliefBase)
+            #print("\nBUFFER BELIEF BASE:", bufferBeliefBase)
             i = 0
             initialJ = 1
             j = initialJ
             new = []
             while i < len(bufferBeliefBase) - 1:
                 while j < len(bufferBeliefBase):
-                    print("i=", i, "j=", j)
+                    #print("i=", i, "j=", j)
                     complementaryLiteralFound = self.resolve(bufferBeliefBase[i], bufferBeliefBase[j])
-                    print("COMPLEMENTARY:", complementaryLiteralFound)
+                    #print("COMPLEMENTARY:", complementaryLiteralFound)
                     if complementaryLiteralFound:
-                        print("from", bufferBeliefBase[i], "and", bufferBeliefBase[j], "RESOLVENTS is", self.resolvents)
+                        #print("from", bufferBeliefBase[i], "and", bufferBeliefBase[j], "RESOLVENTS is", self.resolvents)
                         # if buffer Belief Base is unsatisfiable -> belief Base entails belief
                         for resolvent in self.resolvents:
-                            print("RESOLVENT: ", resolvent)
+                            #print("RESOLVENT: ", resolvent)
                             if len(resolvent) == 0:
                                 return True
                             if resolvent not in new:
                                 new.append(resolvent)
-                        print("NEW:", new, "\n")
+                        #print("NEW:", new, "\n")
                     j += 1
                 initialJ += 1
                 j = initialJ
@@ -132,22 +135,37 @@ class BeliefBase:
                     newIsSubsetOfBufferBeliefBase = 1
                     break
             if newIsSubsetOfBufferBeliefBase == 2:
-                print("REPETITION OF NEW")
+                print("\nBelief doesn't follow from buffer Belief Base, because of: REPETITION OF EXISTING CLAUSE IN bufferBB")
                 return False
             # If there is nothing to resolve -> the Belief Base doesn't entail belief
-            print("NEW:", new)
+            #print("NEW:", new)
             if len(new) == 0:
-                print("I HAVE NOTHING TO RESOLVE")
+                print("Belief doesn't follow from buffer Belief Base, because of: THERE IS NOTHING TO RESOLVE RESOLVE\n")
                 return False
             for eachSmallPartOfNew in new:
                 bufferBeliefBase.append(eachSmallPartOfNew)
 
     # put in 2d array as the parameter
     def negateBelief(self, beliefs):
-        symbols_list = symbols('a b c d')
-        symbol_mapping_negative = {symbol: -symbol for symbol in symbols_list}
-        symbol_mapping_negative.update({-symbol: symbol for symbol in symbols_list})
-        negated_beliefs = [[symbol_mapping_negative.get(symbol, symbol) for symbol in row] for row in beliefs]
+        negated_beliefs = []
+        if (len(beliefs) == 1):
+            for i in range(len(beliefs[0])):
+                negated_beliefs.append([-beliefs[0][i]])
+        else:
+            for i in range((len(beliefs))):
+                for j in range(len(beliefs[i])):
+                    for k in range(i, len(beliefs)):
+                        for l in range(len(beliefs[k])):
+                            if (k != i):
+
+                                if (beliefs[i][j] == beliefs[k][l]):
+                                    if ([-beliefs[i][j]] not in negated_beliefs):
+                                        negated_beliefs.append([-beliefs[i][j]])
+                                else:
+                                    negatedClause = [-beliefs[i][j], -beliefs[k][l]]
+                                    negatedClause2 = [-beliefs[k][l], -beliefs[i][j]]
+                                    if (negatedClause not in negated_beliefs and negatedClause2 not in negated_beliefs):
+                                        negated_beliefs.append(negatedClause)
         return negated_beliefs
 
     # non-cnf string into cnf string
@@ -195,24 +213,4 @@ class BeliefBase:
 a, b, c, d = symbols('a b c d')
 bb = BeliefBase()
 
-#bb.addBelief("b", 1000)
-
-# # bb.addBelief("a and c", 1)
-# bb.addBelief("a imp c", 1)
-# bb.addBelief("a", 1000)
-# bb.addBelief("a or c", 1)
-#print(bb.beliefBase)
-# bb.beliefBase.update({"a imp b": 5})
-# bb.beliefBase.update({"a imp c": 2})
-# bb.beliefBase.update({"a imp d": 6})
-# bb.beliefBase.update({"a": 10})
-# bb.beliefBase.update({"a or c": 1})
-# bb.addBelief("a and c", 1)
-# bb.addBelief("a imp c", 1)
-# bb.addBelief("a", 1000)
-# bb.addBelief("a or c", 1)
-# print("Before Contraction:",bb.beliefBase)
-# #bb.newContraction(" b or c")
-# print("Phi: b or c")
-# print("Contraction Result",bb.beliefBase)
-print(bb.revision("neg a and b", 1))
+bb.revision("neg b and neg c and neg d", 1)
