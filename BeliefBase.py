@@ -13,15 +13,15 @@ class BeliefBase:
 
     def getBeliefBase(self):
         return self.beliefBase
+    
+    def clearBeliefBase(self):
+        self.beliefBase.clear()
+    
     def expansion(self, belief, priority):
         self.beliefBase.update({belief : priority})
+
     def revision(self, belief, priority):
         a, b, c, d = symbols('a b c d')
-        # bb.beliefBase.update({"a imp b": 5})
-        bb.beliefBase.update({"a imp c": 1001})
-        bb.beliefBase.update({"a imp d": 10})
-        bb.beliefBase.update({"a imp b": 20})
-        bb.beliefBase.update({"a": 3000})
         if belief in self.beliefBase:
             print("This belief {", belief, "} is already in beliefBase", self.beliefBase)
         else:
@@ -33,7 +33,7 @@ class BeliefBase:
                 negativeArrayBelief = self.negateBelief(arrayBelief)
                 self.beliefBase = copy.deepcopy(self.contraction(negativeArrayBelief))
             self.expansion(belief, priority)
-            print("\n\nBelief was added to beliefBase", self.beliefBase)
+            print("Belief {" + belief + "} was successfully added to the belief base")
 
 
     def removeBelief(self, belief):
@@ -41,7 +41,6 @@ class BeliefBase:
             self.beliefBase.pop(belief)
 
     def contraction(self, newBelief):
-        #print("THERE IS CONTRACTION:")
         listOfWorlds = self.sum_combinations(self.beliefBase)
         print(listOfWorlds)
 
@@ -49,11 +48,7 @@ class BeliefBase:
         maxPriority = 0
         for world in listOfWorlds:
             convertedWorldToCNF = self.convertBeliefBaseToCNF(world)
-            print("\nCurrent world", world)
-            if self.checkForEntailment(newBelief, convertedWorldToCNF):
-                print("World entails negated belief")
-            else:
-                #print("World", world)
+            if not self.checkForEntailment(newBelief, convertedWorldToCNF):
                 totalPriority = 0
                 for priority in list(world.values()):
                     totalPriority += priority
@@ -135,12 +130,10 @@ class BeliefBase:
                     newIsSubsetOfBufferBeliefBase = 1
                     break
             if newIsSubsetOfBufferBeliefBase == 2:
-                print("\nBelief doesn't follow from buffer Belief Base, because of: REPETITION OF EXISTING CLAUSE IN bufferBB")
                 return False
             # If there is nothing to resolve -> the Belief Base doesn't entail belief
             #print("NEW:", new)
             if len(new) == 0:
-                print("Belief doesn't follow from buffer Belief Base, because of: THERE IS NOTHING TO RESOLVE RESOLVE\n")
                 return False
             for eachSmallPartOfNew in new:
                 bufferBeliefBase.append(eachSmallPartOfNew)
@@ -213,4 +206,52 @@ class BeliefBase:
 a, b, c, d = symbols('a b c d')
 bb = BeliefBase()
 
-bb.revision("neg b and neg c and neg d", 1)
+choice = 0
+while choice != -1:
+    choice = int(input("Please, choose the thing you want to do with the belief base: \n" +
+        "1. Print\n" +  
+        "2. Expand\n" +
+        "3. Remove belief\n" +
+        "4. Check for logical entailment with new belief\n"+
+        "5. Contraction with new belief\n"+
+        "6. Revision with new belief\n"
+        "7. Clear belief base\n\n"+
+        ">> "))
+    if(choice == 1):
+        print("\nBelief base: ", bb.getBeliefBase(), "\n")
+        input("Press any key to continue...\n\n")
+    elif(choice == 2):
+        newBelief = input("Enter new belief > ")
+        newBeliefPriority = int(input("Enter priority > "))
+        bb.expansion(newBelief, newBeliefPriority)
+        print("\nBelief {", newBelief, "} expanded the belief base!")
+        input("Press any key to continue...\n\n")
+    elif(choice == 3):
+        beliefToRemove = input("Enter belief to remove >\n")
+        bb.removeBelief(beliefToRemove)
+        print("\nBelief {", beliefToRemove, "} was removed from the belief base!")
+        input("Press any key to continue...\n\n")
+    elif(choice == 4):
+        beliefToCheck = input("Enter belief for checking the logical entailment with current belief base > \n")
+        beliefCNF = bb.ClauseToCNF(beliefToCheck)
+        arrayBelief = bb.StringToArrayCNF(beliefCNF)
+        if(bb.checkForEntailment(arrayBelief, bb.convertBeliefBaseToCNF(bb.getBeliefBase()))):
+            print("Belief {"+ beliefToCheck+ "} entails from the current belief base")
+        else:
+            print("Belief {"+ beliefToCheck+ "} does NOT entails from the current belief base")
+        input("Press any key to continue...\n\n")
+    elif(choice == 5):
+        beliefToContruct = input("Enter belief for contruction of belief base > \n")
+        bb.contraction(beliefToContruct)
+        print("Contruction with belief {" + beliefToContruct + "} preformed successfully")
+        print("Belief base after contruction: ", bb.getBeliefBase())
+        input("Press any key to continue...\n\n")
+    elif(choice == 6):
+        beliefToRevision = input("Enter belief for revision of belief base > \n")
+        beliefToRevisionPriority = int(input("Enter the priority of this belief > \n"))
+        bb.revision(beliefToRevision, beliefToRevisionPriority)
+        print("Belief base after revision: ", bb.getBeliefBase())
+        input("Press any key to continue...\n\n")
+    elif(choice == 7):
+        bb.clearBeliefBase()
+        print("Belief base was cleared successfully")
