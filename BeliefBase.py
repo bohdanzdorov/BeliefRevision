@@ -277,6 +277,7 @@ while choice != -1:
         "5. Revision\n"+
         "6. Revision with postulates\n"
         "7. Clear belief base\n\n"+
+        "Write '-1' to exit"
         ">> "))
     if(choice == 1):
         print("\nBelief base: ", bb.getBeliefBase(), "\n")
