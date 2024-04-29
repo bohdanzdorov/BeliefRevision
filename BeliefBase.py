@@ -55,7 +55,6 @@ class BeliefBase:
 
             beliefBaseBufferForExtensionPostulate = copy.deepcopy(self.beliefBase)
             isExtensionPassed = False
-            print(len(arrayBelief))
             if(len(arrayBelief) > 1):
                 beliefBaseArrayBufferForExtensionPostulate = copy.deepcopy(bufferBeliefBase)
                 arrayBeliefForExtensionPostulate = copy.deepcopy(arrayBelief)
@@ -72,6 +71,7 @@ class BeliefBase:
             if not self.checkForEntailment(arrayBelief, bufferBeliefBase):
                 negativeArrayBelief = self.negateBelief(arrayBelief)
                 self.beliefBase = copy.deepcopy(self.contraction(negativeArrayBelief))
+                beliefBaseBufferForPostulates = copy.deepcopy(self.contraction(negativeArrayBelief))
             self.expansion(belief, priority)      
             print("Belief {" + belief + "} was successfully added to the belief base")
             if(beliefBaseBufferForExtensionPostulate == self.beliefBase or isExtensionPassed):
@@ -90,7 +90,6 @@ class BeliefBase:
         isInclusionFailed = False
         for key, value in self.beliefBase.items():
             if key not in beliefBaseBufferForPostulates:
-                print(key)
                 isInclusionFailed = True
                 print("Inclusion postulate failed")
                 break
@@ -206,7 +205,6 @@ class BeliefBase:
         negated_beliefs = []
         if (len(beliefs) == 1):
             for i in range(len(beliefs[0])):
-                print(-beliefs[0][i])
                 negated_beliefs.append([-beliefs[0][i]])
         else:
             for i in range((len(beliefs))):
